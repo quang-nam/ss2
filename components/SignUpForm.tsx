@@ -4,6 +4,8 @@ import {useFormik} from 'formik'
 import { ethers } from 'ethers';
 import { createClient } from '@supabase/supabase-js';
 import {v4 as uuidv4} from "uuid"
+import { useRouter } from 'next/router';
+
 const supabase= createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_KEY
@@ -12,26 +14,26 @@ const supabase= createClient(
 
 const SignupForm = () => {
     const [loginState, setLoginState]= useState("");
+    const router =useRouter()
     const formik = useFormik({
         initialValues:{
             email: "",
             password:"",
         },
         validationSchema: Yup.object({
-            email: Yup.string()
-                    .required("Required")
-                    .min(4,"Must be 4 characters or more"),
+            email:Yup.string().required("Required").matches(/^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/
+            ,"Please enter the valid email address"),
             password:Yup.string().required("Required").matches(/((?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%]).{6,15})/,
                     "Password must be 6 or 15 characters, special characters"),
         }),
         onSubmit: async(value)=>{
             window.alert('Submitted successfully')
-            const{ user, session, error}= await supabase.auth.signIn({
+            const{ user, session, error}= await supabase.auth.signUp({
                 email: value.email,
-                password: value.password
+             password: value.password
             })
             
-            
+            console.log(error?.message)
             console.log(user)
         }
     })
@@ -55,7 +57,7 @@ const SignupForm = () => {
     const login = async()=>{
 
          setLoginState("Connecting to your wallet...");
-         //connectToMetaMask()
+         connectToMetaMask()
         if(!window.ethereum ){
             setLoginState("No metamask wallet... please install it");
             return"";
@@ -63,6 +65,7 @@ const SignupForm = () => {
         if(window.ethereum){
             console.log("Hi")
             // find current user
+            
             const provider = new ethers.providers.Web3Provider(window.ethereum);
             await provider.send("eth_requestAccounts",[]);
             const signer= provider.getSigner();// get current address
@@ -74,6 +77,7 @@ const SignupForm = () => {
                 method:"POST",
                 body: JSON.stringify({
                     walletAddr,
+                    
                 }),
                 headers:{
                     "Content-Type": "application/json"
@@ -98,7 +102,8 @@ const SignupForm = () => {
             })
             setLoginState("Login completed ....")
             const {user,token}= await response.json();
-             await supabase.auth.setAuth(token)
+              supabase.auth.setAuth(token)
+            router.push('/homepage')
         }
         
     }
