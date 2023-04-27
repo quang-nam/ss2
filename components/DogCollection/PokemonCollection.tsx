@@ -13,7 +13,7 @@ const PokemonCollection:React.FC <Props>= (props) => {
             {pokemons.map((pokemon)=>{
                 return(
                     <div className="">
-                        <PokemonList
+                        <PokemonList 
                           key={pokemon.id}
                           name={pokemon.name}
                           id={pokemon.id}
